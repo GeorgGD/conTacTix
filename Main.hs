@@ -1,8 +1,9 @@
 {-
+
+
 -}
 
-data Point = Empty
- (Int,Int) | White (Int,Int) | Black (Int,Int) deriving (Show)
+data Point = Empty (Int,Int) | White (Int,Int) | Black (Int,Int) deriving (Show)
 
 
 
@@ -15,6 +16,9 @@ type Board = [Point]
   Creates an unoccupied point with the given co-ordinates (a,b)
   RETURNS: The empty point with coordinates (a,b)
   EXAMPLES: makePoint 1 1 = Empty (1,1)
+
+
+
 -}
 makePoint :: Int -> Int -> Point
 makePoint a b = Empty (a,b)
@@ -24,6 +28,8 @@ makePoint a b = Empty (a,b)
   makeBoard x
   creates a Board of size x^2
   RETURNS: Empty
+
+
 -}
 
 makeBoard :: Int -> Board
@@ -40,23 +46,37 @@ colmBoard x a b | mod b x == (x-1) = [makePoint a b]
 
 sortBoard :: Board -> [Board]
 sortBoard [] = []
-sortBoard (x:xs) = [sortBoardByRow(x:xs)] ++ sortBoard(removeRow x (x:xs))
+sortBoard (x:y:xs) | comparePoints x y == True = [[x]] ++ sortBoard (y:xs)
+                   | otherwise = sortBoard (y:xs)
                               
+
+sortBoard2 :: Board -> [Board]
+sortBoard2 [] = []
+sortBoard2 (x:y:xs) | comparePoints x y == True = [x:(sortBoard2 (y:xs))]
+                    | otherwise = [[x]] ++ (sortBoard2 (y:xs))
+
 comparePoints :: Point -> Point -> Bool
 comparePoints (Empty (a1,_)) (Empty (a2,_)) | a1 == a2 = True
-                                            | otherwise = False
-                                            
-sortBoardByRow :: Board -> Board
-sortBoardByRow [] = []
-sortBoardByRow (x:xs) | length xs == 0 = [x]
-                      | comparePoints x (head xs) == True = x:(sortBoardByRow xs)
-                      | comparePoints x (head xs) == False = [x] 
+                                   | otherwise = False
 
-removeRow :: Point -> Board -> Board
-removeRow _ [] = []
-removeRow k (x:xs) | comparePoints k x == True = removeRow k xs
-                   | comparePoints k x == False = (x:xs)
-    
+
+--makeMove :: Point -> Board
+--makeMove (White (a,b)) = 
+--makeMove (Black (a,b)) =
+
+--makeMoveAux :: Point -> Board -> Board
+--makeMoveAux (White (a,b)) board | 
+--makeMoveAux (Black (a,b)) board |
+
+
+
+{-
+  emptyPoint p
+  checks if p is empty
+  RETURNS: True if p is empty, otherwise False
+  EXAMPLES: emptyPoint (Empty (1,2)) == True
+            emptyPoint (White (3,3)) == False
+-}
 
 emptyPoint :: Point -> Bool
 emptyPoint (Empty (a,b)) = True
