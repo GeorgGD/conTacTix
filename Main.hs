@@ -36,7 +36,7 @@ makePoint a b = Empty (a,b)
   makeBoard x
   creates a Board of size x^2
   RETURNS: Board with empty points.
-  PRE: x is non-negative
+  PRE: x must be non-negative.
   EXAMPLES: makeBoard 3   will return    [Empty (0,0),Empty (0,1),Empty (0,2),Empty (1,0),Empty (1,1),Empty (1,2),Empty (2,0),Empty (2,1),Empty (2,2)]
             makeBoard 2   will return    [Empty (0,0),Empty (0,1),Empty (1,0),Empty (1,1)]
 -}
@@ -56,78 +56,21 @@ makeBoard x = makeBoard' x 0 0
 makeBoard' :: Int -> Int -> Int -> Board
 makeBoard' 0 _ _ = []
 makeBoard' x a b | a == x =  []
-                | mod a x <= (x-1) = (colmBoard x a b) ++ (makeBoard' x (a+1) b)
+                | mod a x <= (x-1) = (rowBoard x a b) ++ (makeBoard' x (a+1) b)
 
 {-
-  colmBoard x a b
-  Sorts the points into colums?
-  PRE: True
+  rowBoard x a b
+  creates a row of points
+  PRE: x, a and b must be positive.
   RETURNS: all the empty points that exist with value a in board x, starting with the point of values a and b.
-  VARIANT: ??
-  EXAMPLES:  colmBoard 5 1 2   will return   [Empty (1,2),Empty (1,3),Empty (1,4)]
-             colmBoard 4 1 1   will return   [Empty (1,1),Empty (1,2),Empty (1,3)]
+  VARIANT: difference between b and x. 
+  EXAMPLES:  rowBoard 5 1 2   will return   [Empty (1,2),Empty (1,3),Empty (1,4)]
+             rowBoard 4 1 1   will return   [Empty (1,1),Empty (1,2),Empty (1,3)]
 -}
 
-colmBoard :: Int -> Int -> Int -> Board
-colmBoard x a b | mod b x == (x-1) = [makePoint a b]
-                | mod b x  < (x-1) = [makePoint a b] ++ (colmBoard x a (b+1))
-
-{-
-  BEHÖVER VI DENNA?
-
-  sortBoard board
-  
-  PRE: True
-  RETURNS:
-  VARIANT:
-  EXAMPLES:
--}
-
-sortBoard :: Board -> [Board]
-sortBoard [] = []
-sortBoard (x:xs) = [sortBoardByRow(x:xs)] ++ sortBoard(removeRow x (x:xs))
-
-{-
-  comparePoints (Empty (a1,b1)) (Empty (a2,b2))
-  checks if two empty points have the same value for a.
-  PRE: True
-  RETURNS: True if the given points have the same value for a, if not then False.
-  EXAMPLES:  comparePoints (Empty (1,2)) (Empty (1,4))   will return   True
--}
-
-comparePoints :: Point -> Point -> Bool
-comparePoints (Empty (a1,_)) (Empty (a2,_)) | a1 == a2 = True
-                                            | otherwise = False
-{-
-        ANVÄNDER VI DENNA?
-
-  sortBoardByRow board
-  
-  PRE: True
-  RETURNS:
-  VARIANT:
-  EXAMPLES:
--}
-
-sortBoardByRow :: Board -> Board
-sortBoardByRow [] = []
-sortBoardByRow (x:xs) | length xs == 0 = [x]
-                      | comparePoints x (head xs) == True = x:(sortBoardByRow xs)
-                      | comparePoints x (head xs) == False = [x] 
-
-{-
-        ANVÄNDER VI DENNA?
-
-  PRE: True
-  RETURNS:
-  VARIANT:
-  EXAMPLES:
--}
-
-removeRow :: Point -> Board -> Board
-removeRow _ [] = []
-removeRow k (x:xs) | comparePoints k x == True = removeRow k xs
-                   | comparePoints k x == False = (x:xs)
+rowBoard :: Int -> Int -> Int -> Board
+rowBoard x a b | mod b x == (x-1) = [makePoint a b]
+                | mod b x  < (x-1) = [makePoint a b] ++ (rowBoard x a (b+1))
 
 {-
   emptyPoint point
@@ -180,7 +123,7 @@ makeMove (Empty (a,b)) board                         = board
 {-
   connectedDots d1 d2
   checks if d1 and d2 are connected. TODO describe what points are connected
-  PRE: True
+  PRE: d1 and d2 must be pairs that contain positive integers.
   RETURNS: True if the two given dots are connected, otherwise False.
   EXAMPLES: connectedDots (1,1) (1,2)   will return   True
             connectedDots (1,1) (2,2)   will reutrn   False
@@ -211,7 +154,7 @@ connectedPoints p1 p2 | (sameColor p1 p2) && connectedDots (pointPos p1) (pointP
   RETURNS: a list with all the points that are neighbours (connected) to the given point.
   VARIANT: length board
   EXAMPLES: neighbours (White (1,1)) [Empty (0,0),Empty (0,1),White (1,0),Empty (1,1)]   will return   [White (1,0)]
-            neighbours (Empty (1,1)) [Empty (0,0),Empty (0,1),Empty (0,2),Empty (1,0),Empty (1,1),Empty (1,2),Empty (2,0),Empty (2,1),Empty (2,2)]   will return   [Empty (0,1),Empty (0,2),Empty (1,0),Empty (1,1),Empty (1,2),Empty (2,0),Empty (2,1)]
+            neighbours (Empty (1,1)) [Empty (0,0),Empty (0,1),Black (0,2),Empty (1,0),Empty (1,1),Black (1,2),Empty (2,0),Empty (2,1),Empty (2,2)]   will return   [Empty (0,1),Empty (0,2),Empty (1,0),Empty (1,1),Empty (1,2),Empty (2,0),Empty (2,1)]
 -}
 
 neighbours :: Point -> Board -> Board
