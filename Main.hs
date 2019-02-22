@@ -47,9 +47,10 @@ makeBoard x = makeBoard' x 0 0
 
 {-
   makeBoard' x a b
-  PRE: True
-  RETURNS:
-  VARIANT:
+  creates a board that is represented by a square matrix with starting index (0,0).
+  PRE: x must be non-negative.
+  RETURNS: returns a list of positions in a board, represented by color and a pair. 
+  VARIANT: difference of x and a. (to be revised) 
   EXAMPLES:
 -}
 
