@@ -167,7 +167,9 @@ neighbours p (x:xs) | (connectedPoints p x) == True = x : neighbours p xs
   pointRemover board n
   removes a point inside a board
   RETURNS: a board with point n removed
-  EXAMPLES: pointRemover 
+  EXAMPLES: pointRemover [White (0,0),White (0,1),Empty (0,2),Black (0,3),Empty (1,0),White (1,1),Empty (1,2),Black (1,3),Empty (2,0),Black (2,1),Black (2,2),Empty (2,3),Black (3,0),Empty (3,1),Empty (3,2),Empty (3,3)] (White (0,0))
+           will return
+           [White (0,1),Empty (0,2),Black (0,3),Empty (1,0),White (1,1),Empty (1,2),Black (1,3),Empty (2,0),Black (2,1),Black (2,2),Empty (2,3),Black (3,0),Empty (3,1),Empty (3,2),Empty (3,3)]
 -}
 pointRemover :: Board -> Point -> Board
 pointRemover [] _ = []
@@ -178,7 +180,9 @@ pointRemover (b:bs) n | n == b = bs
   pointRemover2 board (n:ns)
   removes all given points inside a board
   RETURNS: a board with all points (n:ns) removed
-  EXAMPLES: pointRemover2 
+  EXAMPLES: pointRemover2 [White (0,0),White (0,1),Empty (0,2),Black (0,3),Empty (1,0),White (1,1),Empty (1,2),Black (1,3),Empty (2,0),Black (2,1),Black (2,2),Empty (2,3),Black (3,0),Empty (3,1),Empty (3,2),Empty (3,3)] [(White (0,0)),(White (0,1))]
+            will return
+            [Empty (0,2),Black (0,3),Empty (1,0),White (1,1),Empty (1,2),Black (1,3),Empty (2,0),Black (2,1),Black (2,2),Empty (2,3),Black (3,0),Empty (3,1),Empty (3,2),Empty (3,3)]
 -}
 pointRemover2 :: Board -> Board -> Board
 pointRemover2 [] _ = []
@@ -191,7 +195,9 @@ pointRemover2 (b:bs) (n:ns) | n == b = pointRemover2 bs ns
   crawler board p
   goes through a board and looks for all connected points in the board.  
   RETURNS: all the connected points in a board.
-  EXAMPLES: crawler 
+  EXAMPLES: crawler [White (0,0),White (0,1),Empty (0,2),Black (0,3),Empty (1,0),White (1,1),Empty (1,2),Black (1,3),Empty (2,0),Black (2,1),Black (2,2),Empty (2,3),Black (3,0),Empty (3,1),Empty (3,2),Empty (3,3)] (Black (0,3))
+           will return
+           [Black (3,0),Black (2,1),Black (0,3),Black (1,3),Black (2,2)]
 -}
 crawler :: Board -> Point -> Board
 crawler [] _ = []
@@ -203,7 +209,9 @@ crawler board p = crawlerAux board [p] []
   crawlerAux board (p:ps) cP
   goes through a board and looks for all connected points in the board.  
   RETURNS: all the connected points in a board.
-  EXAMPLES: crawlerAux 
+  EXAMPLES: crawlerAux [White (0,0),White (0,1),Empty (0,2),Black (0,3),Empty (1,0),White (1,1),Empty (1,2),Black (1,3),Empty (2,0),Black (2,1),Black (2,2),Empty (2,3),Black (3,0),Empty (3,1),Empty (3,2),Empty (3,3)] [(White (0,0))] []
+            will return
+            [White (0,0),White (0,1),White (1,1)]
 -}
 crawlerAux :: Board -> Board -> Board -> Board
 crawlerAux board [] [] = []
@@ -223,7 +231,9 @@ crawlerAux board (p:ps) cP = crawler b x ++ crawlerAux b ps [] ++ crawlerAux b x
   blackSide board 
   creates a list of all points on the top edge of the board.  
   RETURNS: all points on the board that represent the top edge.
-  EXAMPLES: blackSide 
+  EXAMPLES: blackSide [White (0,0),White (0,1),Empty (0,2),Black (0,3),Empty (1,0),White (1,1),Empty (1,2),Black (1,3),Empty (2,0),Black (2,1),Black (2,2),Empty (2,3),Black (3,0),Empty (3,1),Empty (3,2),Empty (3,3)]
+            will return
+            [White (0,0),White (0,1),Empty (0,2),Black (0,3)]
 -}
 blackSide :: Board -> Board  
 blackSide [] = []
@@ -237,7 +247,9 @@ blackSide (p:ps) = []
   whiteSide board 
   creates a list of all points on the left edge of the board.  
   RETURNS: all points on the board that represent the left edge of the board.
-  EXAMPLES: whiteSide 
+  EXAMPLES: whiteSide [White (0,0),White (0,1),Empty (0,2),Black (0,3),Empty (1,0),White (1,1),Empty (1,2),Black (1,3),Empty (2,0),Black (2,1),Black (2,2),Empty (2,3),Black (3,0),Empty (3,1),Empty (3,2),Empty (3,3)]
+            will return
+            [White (0,0),Empty (1,0),Empty (2,0),Black (3,0)]
 -}
 whiteSide :: Board -> Board
 whiteSide [] = []
@@ -250,7 +262,9 @@ whiteSide (p:ps) =  whiteSide ps
   blackEndSide board 
   creates a list of all points on the buttom edge of the board.  
   RETURNS: all points on the board that represent the buttom side of the board.
-  EXAMPLES: blackEndSide 
+  EXAMPLES: blackEndSide [White (0,0),Black (0,1),Black (1,0),Empty (1,1)] [White (0,0),Black (0,1),Black (1,0),Empty (1,1)]
+            will return
+            [Black (1,0),Empty (1,1)]
 -}
 blackEndSide :: Board -> Board -> Board
 blackEndSide [] _ = []
@@ -270,7 +284,9 @@ blackEndSide (p:ps) board = blackEndSide ps board
   whiteEndSide board 
   creates a list of all points on the right edge of the board.  
   RETURNS: all points on the board that represent the left side of the board.
-  EXAMPLES: whiteEndSide 
+  EXAMPLES: whiteEndSide [White (0,0),Black (0,1),Black (1,0),Empty (1,1)] [White (0,0),Black (0,1),Black (1,0),Empty (1,1)]
+            will return
+            [Black (0,1),Empty (1,1)]
 -}
 whiteEndSide :: Board -> Board -> Board
 whiteEndSide [] _ = []
@@ -289,7 +305,9 @@ whiteEndSide (p:ps) board = whiteEndSide ps board
   startCon board (x:xs)  
   looks to see if the input list of points (x:xs) has a non empty point on the board  
   RETURNS: True if the input list (x:xs) has a non empty point.
-  EXAMPLES: startCon 
+  EXAMPLES: startCon [White (0,0),Black (0,1),Black (1,0),Empty (1,1)] [White (0,0),Black (0,1)]
+            will return
+            True
 -}
 startCon :: Board -> Board -> Bool
 startCon board [] = False
@@ -300,7 +318,9 @@ startCon board (s:ss) | (crawler board s) == [] = startCon board ss
   endCon board (x:xs) (y:ys) endPoints 
   looks to see if the list of points (x:xs) has a point that exist in list (y:ys)  
   RETURNS: True if a point in (x:xs) is found in (y:ys).
-  EXAMPLES: startCon 
+  EXAMPLES: startCon [White (0,0),Black (0,1),Black (1,0),Empty (1,1)] [White (0,0),Black (0,1)]
+            will return
+            True 
 -}
 endCon :: Board -> Board -> Board -> Board -> Bool
 endCon board _ [] _ = False 
@@ -312,7 +332,9 @@ endCon board (e:es) (x:xs) endPoints | sameColor e x = True
   listOfConPoints board (x:xs)  
   shows all connected points from the first row of the board. 
   RETURNS: a list of list element who consist of connected points from the first row of the board.  
-  EXAMPLES: listOfConPoints 
+  EXAMPLES: listOfConPoints [White (0,0),Black (0,1),Black (1,0),Empty (1,1)] [Black (0,1),Black (1,0)]
+            will return
+            [[Black (0,1),Black (1,0)],[Black (0,1),Black (1,0)]]
 -}
 listOfConPoints :: Board -> Board -> [Board]
 listOfConPoints _ [] = []
@@ -324,7 +346,9 @@ listOfConPoints board (s:ss) | (crawler board s) == [] = listOfConPoints board s
   winCon board color  
   looks to see if the player of given color has won the game. 
   RETURNS: true if the player has won, otherwise it returns false.  
-  EXAMPLES: winCon 
+  EXAMPLES: winCon [White (0,0),Black (0,1),Black (1,0),Empty (1,1)] (Black (0,0))
+            will return
+            True
 -}
 winCon :: Board -> Point -> Bool
 winCon board color | sameColor color (Black (0,0)) = winCondition board (blackSide board) (blackEndSide board board)
@@ -335,7 +359,9 @@ winCon board color | sameColor color (Black (0,0)) = winCondition board (blackSi
   winCondition board start end  
   check if a point in start list is connected to a point in the end list. 
   RETURNS: true if their is a connection between start and end, otherwise false.  
-  EXAMPLES: winCondition 
+  EXAMPLES: winCondition [White (0,0),Black (0,1),Black (1,0),Empty (1,1)]  [White (0,0), Black (0,1)] [Black (1,0), Empty (1,1)]
+            will return
+            True
 -}
 winCondition :: Board -> Board -> Board -> Bool 
 winCondition board start end | (startCon board start) = endConFeeder (c:cs)  
@@ -347,3 +373,5 @@ winCondition board start end | (startCon board start) = endConFeeder (c:cs)
     (c:cs) = listOfConPoints board start
 
 
+
+z = [Empty (0,0),Empty (0,1),Empty (0,2),Black (0,3),Black (0,4),Empty (0,5),Empty (1,0),Empty (1,1),Empty (1,2),Empty (1,3),Black (1,4),Empty (1,5),Empty (2,0),Empty (2,1),Empty (2,2),Empty (2,3),Black (2,4),Empty (2,5),Empty (3,0),Empty (3,1),Black (3,2),Black (3,3),Empty (3,4),Empty (3,5),Empty (4,0),Empty (4,1),Black (4,2),Empty (4,3),Empty (4,4),Empty (4,5),Empty (5,0),Empty (5,1),Black (5,2),Empty (5,3),Empty (5,4),Empty (5,5)]
