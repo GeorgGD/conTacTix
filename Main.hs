@@ -162,3 +162,188 @@ neighbours :: Point -> Board -> Board
 neighbours p [] = []
 neighbours p (x:xs) | (connectedPoints p x) == True = x : neighbours p xs
                     | otherwise = neighbours p xs
+
+{-
+  pointRemover board n
+  removes a point inside a board
+  RETURNS: a board with point n removed
+  EXAMPLES: pointRemover 
+-}
+pointRemover :: Board -> Point -> Board
+pointRemover [] _ = []
+pointRemover (b:bs) n | n == b = bs
+                 | otherwise =  b:(pointRemover bs n)
+                 
+{-
+  pointRemover2 board (n:ns)
+  removes all given points inside a board
+  RETURNS: a board with all points (n:ns) removed
+  EXAMPLES: pointRemover2 
+-}
+pointRemover2 :: Board -> Board -> Board
+pointRemover2 [] _ = []
+pointRemover2 board [] = board
+pointRemover2 (b:bs) (n:ns) | n == b = pointRemover2 bs ns
+                            | otherwise = pointRemover2 (pointRemover (b:bs) n) ns
+
+
+{-
+  crawler board p
+  goes through a board and looks for all connected points in the board.  
+  RETURNS: all the connected points in a board.
+  EXAMPLES: crawler 
+-}
+crawler :: Board -> Point -> Board
+crawler [] _ = []
+crawler _ (Empty (_,_)) = []
+crawler board p = crawlerAux board [p] []
+
+
+{-
+  crawlerAux board (p:ps) cP
+  goes through a board and looks for all connected points in the board.  
+  RETURNS: all the connected points in a board.
+  EXAMPLES: crawlerAux 
+-}
+crawlerAux :: Board -> Board -> Board -> Board
+crawlerAux board [] [] = []
+crawlerAux board [(Empty (_,_))] [] = []
+crawlerAux board [] cP = cP   
+crawlerAux board (p:ps) cP = crawler b x ++ crawlerAux b ps [] ++ crawlerAux b xs l     
+  where
+    (x:xs) | (neighbours p board) == [] = [(Empty (0,0))]
+           | otherwise = neighbours p board
+    l | (x:xs) == [(Empty (0,0))] = cP
+      | otherwise = cP ++ (x:xs)
+    b = pointRemover2 board (x:xs)
+
+
+
+{-
+  blackSide board 
+  creates a list of all points on the top edge of the board.  
+  RETURNS: all points on the board that represent the top edge.
+  EXAMPLES: blackSide 
+-}
+blackSide :: Board -> Board  
+blackSide [] = []
+blackSide ((Empty (a,b)):ps) | a == 0 = (Empty (a,b)):(blackSide ps)
+blackSide ((Black (a,b)):ps) | a == 0 = (Black (a,b)):(blackSide ps)                             
+blackSide ((White (a,b)):ps) | a == 0 = (White (a,b)):(blackSide ps)
+blackSide (p:ps) = []
+
+
+{-
+  whiteSide board 
+  creates a list of all points on the left edge of the board.  
+  RETURNS: all points on the board that represent the left edge of the board.
+  EXAMPLES: whiteSide 
+-}
+whiteSide :: Board -> Board
+whiteSide [] = []
+whiteSide ((Empty (a,b)):ps) | b == 0 = (Empty (a,b)):(whiteSide ps)
+whiteSide ((Black (a,b)):ps) | b == 0 = (Black (a,b)):(whiteSide ps)
+whiteSide ((White (a,b)):ps) | b == 0 = (White (a,b)):(whiteSide ps)
+whiteSide (p:ps) =  whiteSide ps
+
+{-
+  blackEndSide board 
+  creates a list of all points on the buttom edge of the board.  
+  RETURNS: all points on the board that represent the buttom side of the board.
+  EXAMPLES: blackEndSide 
+-}
+blackEndSide :: Board -> Board -> Board
+blackEndSide [] _ = []
+blackEndSide ((Empty (a,b)):ps) board | a == x = (Empty (a,b)):(blackEndSide ps board)
+  where
+    x = (length (blackSide board)) - 1 
+blackEndSide ((Black (a,b)):ps) board | a == x = (Black (a,b)):(blackEndSide ps board)
+  where
+    x = (length (blackSide board)) - 1 
+blackEndSide ((White (a,b)):ps) board | a == x = (White (a,b)):(blackEndSide ps board)
+  where
+    x = (length (blackSide board)) - 1 
+blackEndSide (p:ps) board = blackEndSide ps board
+
+
+{-
+  whiteEndSide board 
+  creates a list of all points on the right edge of the board.  
+  RETURNS: all points on the board that represent the left side of the board.
+  EXAMPLES: whiteEndSide 
+-}
+whiteEndSide :: Board -> Board -> Board
+whiteEndSide [] _ = []
+whiteEndSide ((Empty (a,b)):ps) board | b == x = (Empty (a,b)):(whiteEndSide ps board)
+  where
+    x = (length (blackSide board)) - 1 
+whiteEndSide ((Black (a,b)):ps) board | b == x = (Black (a,b)):(whiteEndSide ps board)
+  where
+    x = (length (blackSide board)) - 1 
+whiteEndSide ((White (a,b)):ps) board | b == x = (White (a,b)):(whiteEndSide ps board)
+  where
+    x = (length (blackSide board)) - 1 
+whiteEndSide (p:ps) board = whiteEndSide ps board
+
+{-
+  startCon board (x:xs)  
+  looks to see if the input list of points (x:xs) has a non empty point on the board  
+  RETURNS: True if the input list (x:xs) has a non empty point.
+  EXAMPLES: startCon 
+-}
+startCon :: Board -> Board -> Bool
+startCon board [] = False
+startCon board (s:ss) | (crawler board s) == [] = startCon board ss
+                      | otherwise = True
+
+{-
+  endCon board (x:xs) (y:ys) endPoints 
+  looks to see if the list of points (x:xs) has a point that exist in list (y:ys)  
+  RETURNS: True if a point in (x:xs) is found in (y:ys).
+  EXAMPLES: startCon 
+-}
+endCon :: Board -> Board -> Board -> Board -> Bool
+endCon board _ [] _ = False 
+endCon board [] (x:xs) endPoints = endCon board endPoints xs endPoints
+endCon board (e:es) (x:xs) endPoints | sameColor e x = True
+                                     | otherwise = endCon board es (x:xs) endPoints
+
+{-
+  listOfConPoints board (x:xs)  
+  shows all connected points from the first row of the board. 
+  RETURNS: a list of list element who consist of connected points from the first row of the board.  
+  EXAMPLES: listOfConPoints 
+-}
+listOfConPoints :: Board -> Board -> [Board]
+listOfConPoints _ [] = []
+listOfConPoints board (s:ss) | (crawler board s) == [] = listOfConPoints board ss
+                             | otherwise = [(crawler board s)] ++ (listOfConPoints board ss)
+
+
+{-
+  winCon board color  
+  looks to see if the player of given color has won the game. 
+  RETURNS: true if the player has won, otherwise it returns false.  
+  EXAMPLES: winCon 
+-}
+winCon :: Board -> Point -> Bool
+winCon board color | sameColor color (Black (0,0)) = winCondition board (blackSide board) (blackEndSide board board)
+                   | sameColor color (White (0,0)) = winCondition board (whiteSide board) (whiteEndSide board board)
+                   | otherwise = False
+
+{-
+  winCondition board start end  
+  check if a point in start list is connected to a point in the end list. 
+  RETURNS: true if their is a connection between start and end, otherwise false.  
+  EXAMPLES: winCondition 
+-}
+winCondition :: Board -> Board -> Board -> Bool 
+winCondition board start end | (startCon board start) = endConFeeder (c:cs)  
+                             | otherwise = False 
+  where
+    endConFeeder [] = False
+    endConFeeder (x:xs) | (endCon board end x end) == False = endConFeeder xs
+                        | (endCon board end x end) == True = True
+    (c:cs) = listOfConPoints board start
+
+
