@@ -2,6 +2,7 @@
 -}
 import Prelude hiding (catch)
 import Control.Exception
+import Test.HUnit
 
 
 {-
@@ -433,6 +434,8 @@ playBlack board = do
                 playWhite newBoard
 
 
+
+
 {-
   genGame
   Generates a board of size 12x12 filled with empty points.
@@ -509,3 +512,12 @@ toPointW (a,b) = White (a,b)
 -}
 toPointB :: (Int,Int) -> Point
 toPointB (a,b) = Black (a,b)
+
+test1 = TestCase (assertEqual "makeBoard not correct" (makeBoard 1) ([Empty (0,0)]))
+test2 = TestCase (assertEqual "makeMove failure" (makeMove (White (0,0)) (makeBoard 1)) ([White (0,0)]))
+test3 = TestCase (assertEqual "WinCondition not correct" (winCon [(White (0,0))] (White (0,0)) ) (True))
+
+listOfTests = [TestLabel "test1" test1, TestLabel "test2" test2, TestLabel "test3" test3]
+
+-- to run tests do runTestTT tests
+tests = TestList listOfTests
