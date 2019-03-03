@@ -1,0 +1,119 @@
+module Main(main) where
+ 
+import Graphics.Gloss hiding (Point)
+import Graphics.Gloss.Interface.IO.Game hiding (Point)
+
+
+
+--data GraphicalPoints   = Picture  Punkter
+data Point = Empty (Int,Int) | White (Int,Int) | Black (Int,Int) deriving (Show,Eq)
+type Board = [Point]
+  
+----------------- Rendering------------------------
+width, height, offsetS :: Int
+width = 1200
+height = 700
+offsetS = 0
+
+window :: Display
+window = InWindow "Con-Tac-Tix" (width, height) (offsetS, offsetS)
+
+background :: Color
+background = dark $ dark magenta
+
+drawing :: [Picture] -> Picture
+drawing board = scale 0.82 0.82 $  rotate (45) $ pictures $ board ++ [wallsWhite 373 (54), wallsWhite (-238) (38), wallsBlack 62 350, wallsBlack 74 (-255), testObj] 
+
+
+testObj = translate (-220) 20 $ color black $ rectangleSolid 24 10 
+glossBoard :: [Picture]
+glossBoard = glossBoard' 12 0 0
+
+
+glossBoard' :: Int -> Int -> Int -> [Picture]
+glossBoard' 0 _ _ = []
+glossBoard' x a b | a == x =  []
+                  | mod a x <= (x-1) = (glossRowBoard x a b) ++ (glossBoard' x (a+1) b)
+
+
+glossRowBoard :: Int -> Int -> Int -> [Picture]
+glossRowBoard x a b | mod b x == (x-1) = [makeBallPoint a b]
+                    | mod b x  < (x-1) = [makeBallPoint a b] ++ (glossRowBoard x a (b+1))
+
+makeBallPoint :: Int -> Int -> Picture
+makeBallPoint a b = ball (fromIntegral ((-228)+50*a) ::Float) (fromIntegral ((-208)+50*b) :: Float) ballColor0
+
+ballColor0 = greyN 0.6
+ballColor1 = black
+ballColor2 = white
+
+ball :: Float -> Float -> Color -> Picture
+ball offset x col = translate x offset $ color col $ circleSolid 24
+
+wallsWhite a b = translate a b $ color white $ rectangleSolid 10 600
+wallsBlack a b = translate a b $ color black $ rectangleSolid 600 10 
+
+---------------------------Gameplay------------------------------------
+
+checkPressPos :: Float -> Float -> Int -> Float -> Float -> (Int,Int)
+checkPressPos x y n a b | n == ((round a) :: Int) = (20,20)
+                        | 20 >= sqrt((x -(-310))^2+(y-(-15))^2) = ((round a) :: Int, (round b) :: Int)
+                        | otherwise = checkPressPos' x y n a b
+
+checkPressPos' x y n a b | n == ((round b) :: Int) = checkPressPos x y n (a+1) 0  
+                         | 20 >= sqrt((x -((-310)+35*a+35*b))^2+ (y-((-15)-35*a+35*b))^2) = ((round a) :: Int ,(round b) :: Int)
+                         | otherwise = checkPressPos' x y n a (b+1)
+
+--------------------------------------------------------------------------------------------
+                
+glossBoard1 :: Float -> Float -> [Picture]
+glossBoard1 x y | x > 272 = glossBoard1' 12 0 0 
+  | otherwise = glossBoard
+  --20 >= sqrt((x -(-310))^2+(y-(-15))^2) = glossBoard1' 12 0 0
+                
+
+--                   && y > (-325) && 24 >= sqrt((x -(-318))^2+(y-10)^2) =  glossBoard1' 12 0 0               | otherwise = glossBoard
+
+
+glossBoard1' :: Int -> Int -> Int -> [Picture]
+glossBoard1' 0 _ _ = []
+glossBoard1' x a b | a == x =  []
+                   | mod a x <= (x-1) = (glossRowBoard1 x a b) ++ (glossBoard1' x (a+1) b)
+
+
+glossRowBoard1 :: Int -> Int -> Int -> [Picture]
+glossRowBoard1 x a b | mod b x == (x-1) = [makeBallPoint1 a b]
+                     | mod b x  < (x-1) = [makeBallPoint1 a b] ++ (glossRowBoard1 x a (b+1))
+
+makeBallPoint1 :: Int -> Int -> Picture
+makeBallPoint1 a b = ball (fromIntegral ((-228)+50*a) ::Float) (fromIntegral ((-208)+50*b) :: Float) ballColor1
+
+
+
+handleKeys (EventKey (MouseButton LeftButton) Up _ (x, y)) board = glossBoard1 x y
+handleKeys _ _ = glossBoard
+iteration _ glossBoard = glossBoard
+-------------------------------------------------------------------------------------------------
+
+world :: Board -> [Picture]
+world [] = []
+world (b:bs) = (drawBall b):(world bs)
+
+--world board = scale 0.82 0.82 $  rotate (45) $ pictures $ board ++ [wallsWhite 373 (54), wallsWhite (-238) (38), wallsBlack 62 350, wallsBlack 74 (-255)] 
+
+drawBall :: Point -> Picture 
+drawBall (Empty (a,b)) = ball (fromIntegral ((-228)+50*b) ::Float) (fromIntegral ((-208)+50*a) :: Float) ballColor0
+drawBall (White (a,b)) = ball (fromIntegral ((-228)+50*b) ::Float) (fromIntegral ((-208)+50*a) :: Float) ballColor2
+drawBall (Black (a,b)) = ball (fromIntegral ((-228)+50*b) ::Float) (fromIntegral ((-208)+50*a) :: Float) ballColor1
+
+
+-----------------------------------------
+ 
+
+----------- Rendering
+main :: IO ()
+--main = display window background (world (world1 z))
+main = play window background 1 glossBoard (drawing) (handleKeys) (iteration)
+
+
+z = [Empty (0,0),Empty (0,1),Empty (0,2),Black (0,3),Black (0,4),Empty (0,5),Empty (1,0),Empty (1,1),Empty (1,2),Empty (1,3),Black (1,4),Empty (1,5),Empty (2,0),Empty (2,1),Empty (2,2),Empty (2,3),Black (2,4),Empty (2,5),Empty (3,0),Empty (3,1),Black (3,2),Black (3,3),Empty (3,4),Empty (3,5),Empty (4,0),Empty (4,1),Black (4,2),Empty (4,3),Empty (4,4),Empty (4,5),Empty (5,0),Empty (5,1),Black (5,2),Empty (5,3),Empty (5,4),Empty (5,5)]
