@@ -1,15 +1,14 @@
 {-
+PRECONDITION: the resolution of your screen must be 1366x768 
 -}
-import Prelude hiding (catch)
-import Control.Exception
-import Test.HUnit
 
+module Main(main) where
+ 
+import Graphics.Gloss hiding (Point)
+import Graphics.Gloss.Interface.IO.Game hiding (Point)
 
-{-
-  A point is represented by a "color" and a pair of coordinates. The color
+import GameRules
 
--}
-data Point = Empty (Int,Int) | White (Int,Int) | Black (Int,Int) deriving (Show,Eq,Read)
 
 
 {-
@@ -20,504 +19,192 @@ data Point = Empty (Int,Int) | White (Int,Int) | Black (Int,Int) deriving (Show,
   SIDE-EFFECTS:
   EXAMPLES:
 -}
+  
+----------------- Rendering------------------------
 
+width, height, offsetS :: Int
+width = 1200
+height = 700
+offsetS = 0
 
-{- sameColor p1 p2
-  Checks if two points has the same color.
-  PRE: True
-  RETURNS: True if p1 and p2 have the same color, otherwise False.
-  EXAMPLES: sameColor (White (2,4)) (White (1,3)) == True
+{-
+window draws the GUI with "Con-Tac-Tix" being ther title of the window, width, height and offsetS are self explanatory. 
+SIDE-EFFECT: creates a GUI
 -}
+window :: Display
+window = InWindow "Con-Tac-Tix" (width, height) (offsetS, offsetS)
 
+backgroundColor :: Color
+backgroundColor = dark $ dark magenta
 
-sameColor :: Point -> Point -> Bool
-sameColor (White (_,_)) (White (_,_)) = True
-sameColor (Empty (_,_)) (Empty (_,_)) = True
-sameColor (Black (_,_)) (Black (_,_)) = True
-sameColor _ _ = False
-
-type Board = [Point]
-
+{-
+SIDE-EFFECT: draws the board when the game is launched.
+-}
+drawing :: Board -> Picture
+drawing board = scale 0.9 0.9 $  pictures $ world (board) ++ [wallsWhite 373 (47), wallsWhite (-238) (47), wallsBlack 69 350, wallsBlack 69 (-255)] 
 
 
 {-
-  makePoint a b
-  Creates an unoccupied point with the given co-ordinates (a,b)
-  PRE: True
-  RETURNS: The empty point with coordinates (a,b)
-  EXAMPLES: makePoint 1 1 == Empty (1,1)
+  glossBoard
+  draws the con-tac-tix board
+  RETURNS: a 
+  SIDE-EFFECTS: draws solid circles (in GUI).
+  EXAMPLES: lol
 -}
-makePoint :: Int -> Int -> Point
-makePoint a b = Empty (a,b)
+  
+glossBoard :: [Picture]
+glossBoard = glossBoard' 12 0 0
+
+{-
+  glossBoard' x a b 
+  draws the points in the con-tac-tix board with x being the size (x*x) of the board
+  PRE: a and b must have value 0 when the function is initially called
+  RETURNS: a list of objects. 
+  VARIANTS: value a increasing until it's equal to x.
+  SIDE-EFFECTS: draws solid circles (in GUI).
+  EXAMPLES: lol
+-}
+glossBoard' :: Int -> Int -> Int -> [Picture]
+glossBoard' 0 _ _ = []
+glossBoard' x a b | a == x =  []
+                  | mod a x <= (x-1) = (glossRowBoard x a b) ++ (glossBoard' x (a+1) b)
 
 
 {-
-  makeBoard x
-  creates a Board of size x^2
-  PRE: x must be non-negative.
-  RETURNS: Board with empty points.
-  EXAMPLES: makeBoard 3   will return    [Empty (0,0),Empty (0,1),Empty (0,2),Empty (1,0),Empty (1,1),Empty (1,2),Empty (2,0),Empty (2,1),Empty (2,2)]
-            makeBoard 2   will return    [Empty (0,0),Empty (0,1),Empty (1,0),Empty (1,1)]
+  glossRowBoard x a b 
+  creates a list of circles  
+  PRE: a and b must have value 0 when the function is initially called
+  RETURNS: a list of circles.
+  VARIANTS: value b increasing until it's equal to x-1.
+  SIDE-EFFECTS: draws solid circles (in GUI).
+  EXAMPLES: lol
 -}
+glossRowBoard :: Int -> Int -> Int -> [Picture]
+glossRowBoard x a b | mod b x == (x-1) = [makeBallPoint a b]
+                    | mod b x  < (x-1) = [makeBallPoint a b] ++ (glossRowBoard x a (b+1))
 
-makeBoard :: Int -> Board
-makeBoard x = makeBoard' x 0 0
+{-
+  makeBallPoint a b 
+  creates a solid circle at index points a and b.
+  RETURNS: a solid circle
+  SIDE-EFFECTS: draws a single solid circle (in GUI).
+  EXAMPLES: lol
+-}
+makeBallPoint :: Int -> Int -> Picture
+makeBallPoint a b = ball (fromIntegral ((-228)+50*a) ::Float) (fromIntegral ((-208)+50*b) :: Float) ballColor0
+
+ballColor0, ballColor1, ballColor2 :: Color
+ballColor0 = greyN 0.6
+ballColor1 = black
+ballColor2 = white
+
+{-
+  ball offset x col
+  creates a solid circle with position offset and x, as well as color col
+  SIDE-EFFECT: draws a solid circle
+-}
+ball :: Float -> Float -> Color -> Picture
+ball offset x col = translate x offset $ color col $ circleSolid 24
+
+{-
+ wallsWhite a b
+ wallsBlack a b 
+ draws rectangle on the board, of length a and width b
+ SIDE-EFFECT: draws a rectangle
+-}
+wallsWhite a b = translate a b $ color white $ rectangleSolid 10 600
+wallsBlack a b = translate a b $ color black $ rectangleSolid 600 10 
+
+---------------------------Gameplay------------------------------------
+checkPress :: Float -> Float -> (Int,Int)
+checkPress x y | (x > (-265) && y > (-226)) && (x < (206) && y < (296)) = checkPressPos x y 12 0 0 
+               | otherwise = (20,20)
+{-
+  checkPressPos x y n a b 
+  checks at what point the user places a pown.  
+  PRE: a and b must have value 0 when the function is initially called.
+  RETURNS: the coordinates of the point where the pown was placed.
+  VARIANTS: value a increasing until it's equal to x.
+  EXAMPLES: checkPressPos 200 (-210) 12 0 0
+            will return
+            (11,11)
+-}
+checkPressPos :: Float -> Float -> Int -> Float -> Float -> (Int,Int)
+checkPressPos x y n a b | n == ((round a) :: Int) = (20,20)
+                         | n == ((round b) :: Int) = checkPressPos x y n (a+1) 0  
+                         | 20 >= sqrt((x -((-250)+40*b))^2+(y-((281)-44*a))^2) = ((round a) :: Int ,(round b) :: Int)
+                         | otherwise = checkPressPos x y n a (b+1) 
+
+--------------------------------------------------------------------------------------------
+                
+glossBoard1 ::  Color -> [Picture]
+glossBoard1 color = glossBoard1' 12 0 0 color 
+                        
+
+
+glossBoard1' :: Int -> Int -> Int -> Color -> [Picture]
+glossBoard1' 0 _ _ color = []
+glossBoard1' x a b  color | a == x =  []
+                          | mod a x <= (x-1) = (glossRowBoard1 x a b color) ++ (glossBoard1' x (a+1) b color)
+
+
+glossRowBoard1 :: Int -> Int -> Int -> Color -> [Picture]
+glossRowBoard1 x a b color| mod b x == (x-1) = [makeBallPoint1 a b color]
+                     | mod b x  < (x-1) = [makeBallPoint1 a b color] ++ (glossRowBoard1 x a (b+1) color)
+
+makeBallPoint1 :: Int -> Int -> Color ->  Picture
+makeBallPoint1 a b color = ball (fromIntegral ((-228)+50*a) ::Float) (fromIntegral ((-208)+50*b) :: Float) color
 
 
 {-
-  makeBoard' x a b
-  creates a board that is represented by a square matrix with starting index (0,0).
-  PRE: x must be non-negative.
-  RETURNS: returns a list of positions in a board, represented by color and a pair.
-  VARIANT: difference of x and a. (to be revised)
-  EXAMPLES:
+  handleKeys x board ------------
+  checks at what point the user places a pown.  
+  PRE: a and b must have value 0 when the function is initially called.
+  RETURNS: the coordinates of the point where the pown was placed.
+  VARIANTS: value a increasing until it's equal to x.
+  EXAMPLES: checkPressPos 200 (-210) 12 0 0
+            will return
+            (11,11)
 -}
-
-makeBoard' :: Int -> Int -> Int -> Board
-makeBoard' 0 _ _ = []
-makeBoard' x a b | a == x =  []
-                | mod a x <= (x-1) = (rowBoard x a b) ++ (makeBoard' x (a+1) b)
+handleKeys (EventKey (MouseButton LeftButton) Down _ (x, y)) board | (winCon (makeMove (toPointB (checkPress x y)) board) (Black (0,0))) == True = makeBoard 12
+                                                                   | (makeMove (toPointB (checkPress x y)) board) /= board = (makeMove (toPointB (checkPress x y)) board)
+                                                                   
+handleKeys (EventKey (MouseButton RightButton) Down _ (x, y)) board | (winCon (makeMove (toPointW (checkPress x y)) board) (White (0,0))) == True = makeBoard 12
+                                                                    | (makeMove (toPointW (checkPress x y)) board) /= board = (makeMove (toPointW (checkPress x y)) board)
+handleKeys _ board = board
+iteration _ glossBoard = glossBoard
+-------------------------------------------------------------------------------------------------
 
 {-
-  rowBoard x a b
-  creates a row of points
-  PRE: x, a and b must be positive.
-  RETURNS: all the empty points that exist with value a in board x, starting with the point of values a and b.
-  VARIANT: difference between b and x.
-  EXAMPLES:  rowBoard 5 1 2   will return   [Empty (1,2),Empty (1,3),Empty (1,4)]
-             rowBoard 4 1 1   will return   [Empty (1,1),Empty (1,2),Empty (1,3)]
+  world (x:xs)   -------- 
+  checks at what point the user places a pown.  
+  PRE: a and b must have value 0 when the function is initially called.
+  RETURNS: the coordinates of the point where the pown was placed.
+  VARIANTS: value a increasing until it's equal to x.
+  EXAMPLES: checkPressPos 200 (-210) 12 0 0
+            will return
+            (11,11)
 -}
+world :: Board -> [Picture]
+world [] = []
+world (b:bs) = (drawBall b):(world bs)
 
-rowBoard :: Int -> Int -> Int -> Board
-rowBoard x a b | mod b x == (x-1) = [makePoint a b]
-                | mod b x  < (x-1) = [makePoint a b] ++ (rowBoard x a (b+1))
-
-{-
-  emptyPoint point
-  checks if a point is empty or not
-  PRE: True
-  RETURNS: True if a point is empty, otherwise False.
-  EXAMPLES:  emptyPoint (Empty (2,5))   will return   True
-             emptyPoint (White (3,1))   will return   False
--}
-
-emptyPoint :: Point -> Bool
-emptyPoint (Empty (a,b)) = True
-emptyPoint _ = False
-
-{-
-  pointPos (p (a,b))
-  extracts the position, values a and b, from a point without its color.
-  PRE: True
-  RETURNS: a 2-tuple with the values a and b from the given point.
-  EXAMPLES: pointPos (White (1,4))   will return   (1,4)
-            pointPos (Empty (0,4))   will return   (0,4)
--}
-
-pointPos :: Point -> (Int,Int)
-pointPos (Empty (a,b)) = (a,b)
-pointPos (Black (a,b)) = (a,b)
-pointPos (White (a,b)) = (a,b)
+--world board = scale 0.82 0.82 $  rotate (45) $ pictures $ board ++ [wallsWhite 373 (54), wallsWhite (-238) (38), wallsBlack 62 350, wallsBlack 74 (-255)] 
+ 
+drawBall :: Point -> Picture 
+drawBall (Empty (a,b)) = ball (fromIntegral ((-228)+50*(11-a)) ::Float) (fromIntegral ((-208)+50*b) :: Float) ballColor0
+drawBall (White (a,b)) = ball (fromIntegral ((-228)+50*(11-a)) ::Float) (fromIntegral ((-208)+50*b) :: Float) ballColor2
+drawBall (Black (a,b)) = ball (fromIntegral ((-228)+50*(11-a)) ::Float) (fromIntegral ((-208)+50*b) :: Float) ballColor1
 
 
+-----------------------------------------
+ 
 
-{-
-  makeMove (p (a,b)) board
-  changes the color in the given board from Empty to the color of the given point in the point with same values a and b as the given point.
-  PRE: True
-  RETURNS: the same board, but with the empty point (with same values a and b as the given point) replaced with the given point. If the original point is not empty then the given board will be returned untouched.
-  VARIANT: length board
-  EXAMPLES: makeMove (White (1,1)) (makeBoard 2)   will return   [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]
-            makeMove (Black (1,1)) [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]    will return   [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]
--}
-
-makeMove :: Point -> Board -> Board
-makeMove _ [] = []
-makeMove p@(White (a,b)) (x:xs) | x /= (Empty (a,b)) = [x] ++ makeMove p xs
-                                | otherwise          = (p:xs)
-makeMove p@(Black (a,b)) (x:xs) | x /= (Empty (a,b)) = [x] ++ makeMove p xs
-                                | otherwise          = (p:xs)
-makeMove (Empty (a,b)) board                         = board
-
-
-{-
-  connectedDots d1 d2
-  checks if d1 and d2 are connected. TODO describe what points are connected
-  PRE: d1 and d2 must be pairs that contain positive integers.
-  RETURNS: True if the two given dots are connected, otherwise False.
-  EXAMPLES: connectedDots (1,1) (1,2)   will return   True
-            connectedDots (1,1) (2,2)   will return   False
--}
-
-connectedDots :: (Int,Int) -> (Int,Int) -> Bool
-connectedDots (a1,b1) (a2,b2) | (a1 - a2) == 1 && (b1-b2) ==1 = False
-                              | (a1 - a2) == (-1) && (b1-b2) == (-1) = False
-                              | abs (a1-a2) <= 1 && abs (b1-b2) <= 1 = True
-                              | otherwise = False
-
-{-
-  connectedPoints p1 p2
-  checks if two points are connected (have connected Dots as well as the same color). TODO describe what points are connected
-  PRE: True
-  RETURNS: True if the two given points are connected, otherwise False.
-  EXAMPLES: connectedPoints (White (1,1)) (White (1,2))   will return   True
-            connectedPoints (White (1,1)) (Black (1,2))   will return   False
--}
-connectedPoints :: Point -> Point -> Bool
-connectedPoints p1 p2 | (sameColor p1 p2) && connectedDots (pointPos p1) (pointPos p2) = True
-                      | otherwise = False
-
-{-
-  neighbours point board
-  finds all the neighbours (connected points) to the given point in the given board.
-  PRE: True
-  RETURNS: a list with all the points that are neighbours (connected) to the given point.
-  VARIANT: length board
-  EXAMPLES: neighbours (White (1,1)) [Empty (0,0),Empty (0,1),White (1,0),Empty (1,1)] == [White (1,0)]
-            neighbours (Empty (1,1)) [Empty (0,0),Empty (0,1),Black (0,2),Empty (1,0),Empty (1,1),Black (1,2),Empty (2,0),Empty (2,1),Empty (2,2)] == [Empty (0,1),Empty (0,2),Empty (1,0),Empty (1,1),Empty (1,2),Empty (2,0),Empty (2,1)]
--}
-
-neighbours :: Point -> Board -> Board
-neighbours p [] = []
-neighbours p (x:xs) | (connectedPoints p x) == True = x : neighbours p xs
-                    | otherwise = neighbours p xs
-
-{-
-  pointRemover board n
-  removes a point inside a board
-  RETURNS: a board with point n removed
-  EXAMPLES: pointRemover
--}
-pointRemover :: Board -> Point -> Board
-pointRemover [] _ = []
-pointRemover (b:bs) n | n == b = bs
-                 | otherwise =  b:(pointRemover bs n)
-
-{-
-  pointRemover2 board (n:ns)
-  removes all given points inside a board
-  RETURNS: a board with all points (n:ns) removed
-  EXAMPLES: pointRemover2
--}
-pointRemover2 :: Board -> Board -> Board
-pointRemover2 [] _ = []
-pointRemover2 board [] = board
-pointRemover2 (b:bs) (n:ns) | n == b = pointRemover2 bs ns
-                            | otherwise = pointRemover2 (pointRemover (b:bs) n) ns
-
-
-{-
-  crawler board p
-  goes through a board and looks for all connected points in the board.
-  RETURNS: all the connected points in a board.
-  EXAMPLES: crawler
--}
-crawler :: Board -> Point -> Board
-crawler [] _ = []
-crawler _ (Empty (_,_)) = []
-crawler board p = crawlerAux board [p] []
-
-
-{-
-  crawlerAux board (p:ps) cP
-  goes through a board and looks for all connected points in the board.
-  RETURNS: all the connected points in a board.
-  EXAMPLES: crawlerAux
--}
-crawlerAux :: Board -> Board -> Board -> Board
-crawlerAux board [] [] = []
-crawlerAux board [(Empty (_,_))] [] = []
-crawlerAux board [] cP = cP
-crawlerAux board (p:ps) cP = crawler b x ++ crawlerAux b ps [] ++ crawlerAux b xs l
-  where
-    (x:xs) | (neighbours p board) == [] = [(Empty (0,0))]
-           | otherwise = neighbours p board
-    l | (x:xs) == [(Empty (0,0))] = cP
-      | otherwise = cP ++ (x:xs)
-    b = pointRemover2 board (x:xs)
-
-
-
-{-
-  blackSide board
-  creates a list of all points on the top edge of the board.
-  RETURNS: all points on the board that represent the top edge.
-  EXAMPLES: blackSide
--}
-blackSide :: Board -> Board
-blackSide [] = []
-blackSide ((Empty (a,b)):ps) | a == 0 = (Empty (a,b)):(blackSide ps)
-blackSide ((Black (a,b)):ps) | a == 0 = (Black (a,b)):(blackSide ps)
-blackSide ((White (a,b)):ps) | a == 0 = (White (a,b)):(blackSide ps)
-blackSide (p:ps) = []
-
-
-{-
-  whiteSide board
-  creates a list of all points on the left edge of the board.
-  RETURNS: all points on the board that represent the left edge of the board.
-  EXAMPLES: whiteSide
--}
-whiteSide :: Board -> Board
-whiteSide [] = []
-whiteSide ((Empty (a,b)):ps) | b == 0 = (Empty (a,b)):(whiteSide ps)
-whiteSide ((Black (a,b)):ps) | b == 0 = (Black (a,b)):(whiteSide ps)
-whiteSide ((White (a,b)):ps) | b == 0 = (White (a,b)):(whiteSide ps)
-whiteSide (p:ps) =  whiteSide ps
-
-{-
-  blackEndSide board
-  creates a list of all points on the buttom edge of the board.
-  RETURNS: all points on the board that represent the buttom side of the board.
-  EXAMPLES: blackEndSide
--}
-blackEndSide :: Board -> Board -> Board
-blackEndSide [] _ = []
-blackEndSide ((Empty (a,b)):ps) board | a == x = (Empty (a,b)):(blackEndSide ps board)
-  where
-    x = (length (blackSide board)) - 1
-blackEndSide ((Black (a,b)):ps) board | a == x = (Black (a,b)):(blackEndSide ps board)
-  where
-    x = (length (blackSide board)) - 1
-blackEndSide ((White (a,b)):ps) board | a == x = (White (a,b)):(blackEndSide ps board)
-  where
-    x = (length (blackSide board)) - 1
-blackEndSide (p:ps) board = blackEndSide ps board
-
-
-{-
-  whiteEndSide board
-  creates a list of all points on the right edge of the board.
-  RETURNS: all points on the board that represent the left side of the board.
-  EXAMPLES: whiteEndSide
--}
-whiteEndSide :: Board -> Board -> Board
-whiteEndSide [] _ = []
-whiteEndSide ((Empty (a,b)):ps) board | b == x = (Empty (a,b)):(whiteEndSide ps board)
-  where
-    x = (length (blackSide board)) - 1
-whiteEndSide ((Black (a,b)):ps) board | b == x = (Black (a,b)):(whiteEndSide ps board)
-  where
-    x = (length (blackSide board)) - 1
-whiteEndSide ((White (a,b)):ps) board | b == x = (White (a,b)):(whiteEndSide ps board)
-  where
-    x = (length (blackSide board)) - 1
-whiteEndSide (p:ps) board = whiteEndSide ps board
-
-{-
-  startCon board (x:xs)
-  checks if the input list of points (x:xs) has a non empty point on the board
-  RETURNS: True if the input list (x:xs) has a non empty point.
-  EXAMPLES: startCon
--}
-startCon :: Board -> Board -> Bool
-startCon board [] = False
-startCon board (s:ss) | (crawler board s) == [] = startCon board ss
-                      | otherwise = True
-
-{-
-  endCon board (x:xs) (y:ys) endPoints
-  checks if the list of points (x:xs) has a point that exist in list (y:ys)
-  RETURNS: True if a point in (x:xs) is found in (y:ys).
-  EXAMPLES: startCon
--}
-endCon :: Board -> Board -> Board -> Board -> Bool
-endCon board _ [] _ = False
-endCon board [] (x:xs) endPoints = endCon board endPoints xs endPoints
-endCon board (e:es) (x:xs) endPoints | sameColor e x = True
-                                     | otherwise = endCon board es (x:xs) endPoints
-
-{-
-  listOfConPoints board (x:xs)
-  shows all connected points from the first row of the board.
-  RETURNS: a list of list element who consist of connected points from the first row of the board.
-  EXAMPLES: listOfConPoints
--}
-listOfConPoints :: Board -> Board -> [Board]
-listOfConPoints _ [] = []
-listOfConPoints board (s:ss) | (crawler board s) == [] = listOfConPoints board ss
-                             | otherwise = [(crawler board s)] ++ (listOfConPoints board ss)
-
-
-{-
-  winCon board color
-  checks if the player of given color has won the game.
-  RETURNS: true if the player has won, otherwise it returns false.
-  EXAMPLES: winCon
--}
-winCon :: Board -> Point -> Bool
-winCon board color | sameColor color (Black (0,0)) = winCondition board (blackSide board) (blackEndSide board board)
-                   | sameColor color (White (0,0)) = winCondition board (whiteSide board) (whiteEndSide board board)
-                   | otherwise = False
-
-{-
-  winCondition board start end
-  check if a point in start list is connected to a point in the end list.
-  RETURNS: true if there is a connection between start and end, otherwise false.
-  EXAMPLES: winCondition
--}
-winCondition :: Board -> Board -> Board -> Bool
-winCondition board start end | (startCon board start) = endConFeeder (c:cs)
-                             | otherwise = False
-  where
-    endConFeeder [] = False
-    endConFeeder (x:xs) | (endCon board end x end) == False = endConFeeder xs
-                        | (endCon board end x end) == True = True
-    (c:cs) = listOfConPoints board start
-
------ IO -----
-
-{-
-  main
-  Play the game of Con-Tac-Tix!
-  PRE: True
-  RETURNS: Game loop ?
-  SIDE-EFFECTS: Play the game, never returns (?)
-  EXAMPLES: ???
--}
-
+----------- Rendering
 main :: IO ()
-main = do
-  putStrLn "Welcome to Con-Tax-Tix!"
-  board <- genGame
-  printGame board
-  playWhite board
-
-{-
- playWhite board
- places white point at board
- PRE: Board is a valid, non-empty list of Points
- RETURNS: Output to command line (Board with White point inserted)
- SIDE-EFFECTS: Game interaction. Returns if White wins
- EXAMPLES: ??
+--main = display window background (world z)
+main = play window backgroundColor 1 s (drawing) (handleKeys) (iteration)
 
 
-
--}
-
-playWhite :: Board -> IO ()
-playWhite board = do
-  putStrLn "White players move"
-  p <- getPoint
-  newBoard <- return (makeMove (toPointW p) board)
-  if eqBoard board newBoard
-    then do putStrLn "Invalid move, please make a different move!"
-            playWhite board
-       else if winCon newBoard (White (0,0))
-        then do putStrLn "White Won"
-                return ()
-          else do printGame newBoard
-                  playBlack newBoard
-
-
-{-
-  playBlack board
-  places black points on board
-  PRE: Board is a valid, non-empty list of Points
-  RETURNS: Nothing ? (Board with Black point inserted)
-  SIDE-EFFECTS: Game interaction. Returns if Black wins
-  EXAMPLES: ??
--}
-
-playBlack :: Board -> IO ()
-playBlack board = do
-  putStrLn "Black player move"
-  p <- getPoint
-  newBoard <- return (makeMove (toPointB p) board)
-  if eqBoard board newBoard
-    then do putStrLn "Invalid move, please make a different move!"
-            playBlack board
-      else if winCon newBoard (Black (0,0))
-        then do putStrLn "Black won"
-                return ()
-        else do printGame newBoard
-                playWhite newBoard
-
-
-
-
-{-
-  genGame
-  Generates a board of size 12x12 filled with empty points.
-  PRE: True
-  RETURNS: Board of size 12
-  SIDE-EFFECTS: Creates a board in IO monad
-  EXAMPLES: genGame == board of 12x12 empty points
--}
-
-genGame :: IO Board
-genGame = return (makeBoard 12)
-
-{-
- printGame board
- prints the provided board (in IO monad?)
-  PRE: True
- RETURNS:
- SIDE EFFECTS: Prints state of board to command line
- EXAMPLES:
--}
-
-
-printGame :: Board -> IO ()
-printGame board = do
-  putStrLn $ "The state of the board is currently " ++ (show board)
-
-
-{-
-  getPoint
-  reads IO input and warns if input is not valid Point
-  RETURNS: Input of user. Asks again if provided point is not valid.
-  EXAMPLES: Input other than point raises exception, if correct input returns input
-  PRE: True
-
--}
-
-getPoint :: IO (Int,Int)
-getPoint = do
-  catch (do
-  p <- getLine
-  evaluate (read p))
-    ((\_ -> do   -- Handles exception (Incorrect point input)
-       putStrLn "Incorrect input! Points have form (x,y). Try again"
-       getPoint) :: SomeException -> IO (Int,Int))
-
-
-{-eqBoard b1 b2
-  checks if two boards are equal
-  PRE: True
-  RETURNS: True if b1 == b2
-  EXAMPLES: eqBoard [] [] == True
-            eqBoard [(White, (1,1))] [(Black (1,1))] == False
--}
-
-eqBoard :: Board -> Board -> Bool
-eqBoard b1 b2 | b1 == b2 = True
-              | otherwise = False
-
-{-
- toPointW (a,b)
- turns pair into white point with coordinates (a,b)
- RETURNS: White point
- EXAMPLES: toPointW (1,1) == (White (1,1))
-
--}
-toPointW :: (Int,Int) -> Point
-toPointW (a,b) = White (a,b)
-
-{-
- toPointB (a,b)
- turns pair into white point with coordinates (a,b)
- RETURNS: Black point
- EXAMPLES: toPointB (1,1) == (Black (1,1))
--}
-toPointB :: (Int,Int) -> Point
-toPointB (a,b) = Black (a,b)
-
-test1 = TestCase (assertEqual "makeBoard not correct" (makeBoard 1) ([Empty (0,0)]))
-test2 = TestCase (assertEqual "makeMove failure" (makeMove (White (0,0)) (makeBoard 1)) ([White (0,0)]))
-test3 = TestCase (assertEqual "WinCondition not correct" (winCon [(White (0,0))] (White (0,0)) ) (True))
-
-listOfTests = [TestLabel "test1" test1, TestLabel "test2" test2, TestLabel "test3" test3]
-
--- to run tests do runTestTT tests
-tests = TestList listOfTests
+s = makeBoard 12
+--s = [Empty (0,0),Empty (0,1),Empty (0,2),Black (0,3),Black (0,4),Empty (0,5),Empty (1,0),Empty (1,1),Empty (1,2),Empty (1,3),Black (1,4),Empty (1,5),Empty (2,0),Empty (2,1),Empty (2,2),Empty (2,3),Black (2,4),Empty (2,5),Empty (3,0),Empty (3,1),Black (3,2),Black (3,3),Empty (3,4),Empty (3,5),Empty (4,0),Empty (4,1),Black (4,2),Empty (4,3),Empty (4,4),Empty (4,5),Empty (5,0),Empty (5,1),Black (5,2),Empty (5,3),Empty (5,4),Empty (5,5)]
