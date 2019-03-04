@@ -1,35 +1,23 @@
 module GameRules where 
-{-
--}
+
 import Prelude hiding (catch)
 import Control.Exception
 import Test.HUnit
 import System.Random
 
 {-
-  A point is represented by a "color" and a pair of coordinates. The color
+  A point is represented by a color and a pair of coordinates.
 -}
 
 data Point = Empty (Int,Int) | White (Int,Int) | Black (Int,Int) deriving (Show,Eq,Read)
-data Player = White1 | Black1
 type Board = [Point]
-
-
-{-
-  template
-  PRE:
-  RETURNS:
-  VARIANTS:
-  SIDE-EFFECTS:
-  EXAMPLES:
--}
-
 
 {- sameColor p1 p2
   Checks if two points has the same color.
-  PRE: True
   RETURNS: True if p1 and p2 have the same color, otherwise False.
-  EXAMPLES: sameColor (White (2,4)) (White (1,3)) == True
+  EXAMPLES: sameColor (White (2,4)) (White (1,3))
+            will return
+            True
 -}
 
 
@@ -45,9 +33,10 @@ sameColor _ _ = False
 {-
   makePoint a b
   Creates an unoccupied point with the given co-ordinates (a,b)
-  PRE: True
   RETURNS: The empty point with coordinates (a,b)
-  EXAMPLES: makePoint 1 1 == Empty (1,1)
+  EXAMPLES: makePoint 1 1
+            will return
+            Empty (1,1)
 -}
 makePoint :: Int -> Int -> Point
 makePoint a b = Empty (a,b)
@@ -58,8 +47,13 @@ makePoint a b = Empty (a,b)
   creates a Board of size x^2
   PRE: x must be non-negative.
   RETURNS: Board with empty points.
-  EXAMPLES: makeBoard 3   will return    [Empty (0,0),Empty (0,1),Empty (0,2),Empty (1,0),Empty (1,1),Empty (1,2),Empty (2,0),Empty (2,1),Empty (2,2)]
-            makeBoard 2   will return    [Empty (0,0),Empty (0,1),Empty (1,0),Empty (1,1)]
+  EXAMPLES: makeBoard 3
+            will return
+            [Empty (0,0),Empty (0,1),Empty (0,2),Empty (1,0),Empty (1,1),Empty (1,2),Empty (2,0),Empty (2,1),Empty (2,2)]
+
+            makeBoard 2
+            will return
+            [Empty (0,0),Empty (0,1),Empty (1,0),Empty (1,1)]
 -}
 
 makeBoard :: Int -> Board
@@ -71,8 +65,10 @@ makeBoard x = makeBoard' x 0 0
   creates a board that is represented by a square matrix with starting index (0,0).
   PRE: x must be non-negative.
   RETURNS: returns a list of positions in a board, represented by color and a pair.
-  VARIANT: difference of x and a. (to be revised)
-  EXAMPLES:
+  VARIANT: difference of x and a.
+  EXAMPLES: makeBoard' 2 0 0
+            will return
+            [Empty (0,0),Empty (0,1),Empty (1,0),Empty (1,1)]
 -}
 
 makeBoard' :: Int -> Int -> Int -> Board
@@ -86,8 +82,13 @@ makeBoard' x a b | a == x =  []
   PRE: x, a and b must be positive.
   RETURNS: all the empty points that exist with value a in board x, starting with the point of values a and b.
   VARIANT: difference between b and x.
-  EXAMPLES:  rowBoard 5 1 2   will return   [Empty (1,2),Empty (1,3),Empty (1,4)]
-             rowBoard 4 1 1   will return   [Empty (1,1),Empty (1,2),Empty (1,3)]
+  EXAMPLES:  rowBoard 5 1 2
+             will return
+             [Empty (1,2),Empty (1,3),Empty (1,4)]
+
+             rowBoard 4 1 1
+             will return
+             [Empty (1,1),Empty (1,2),Empty (1,3)]
 -}
 
 rowBoard :: Int -> Int -> Int -> Board
@@ -97,10 +98,14 @@ rowBoard x a b | mod b x == (x-1) = [makePoint a b]
 {-
   emptyPoint point
   checks if a point is empty or not
-  PRE: True
   RETURNS: True if a point is empty, otherwise False.
-  EXAMPLES:  emptyPoint (Empty (2,5))   will return   True
-             emptyPoint (White (3,1))   will return   False
+  EXAMPLES:  emptyPoint (Empty (2,5))
+             will return
+             True
+
+            emptyPoint (White (3,1))
+            will return
+            False
 -}
 
 emptyPoint :: Point -> Bool
@@ -110,10 +115,14 @@ emptyPoint _ = False
 {-
   pointPos (p (a,b))
   extracts the position, values a and b, from a point without its color.
-  PRE: True
   RETURNS: a 2-tuple with the values a and b from the given point.
-  EXAMPLES: pointPos (White (1,4))   will return   (1,4)
-            pointPos (Empty (0,4))   will return   (0,4)
+  EXAMPLES: pointPos (White (1,4))
+            will return
+            (1,4)
+
+            pointPos (Empty (0,4))
+            will return
+            (0,4)
 -}
 
 pointPos :: Point -> (Int,Int)
@@ -126,11 +135,15 @@ pointPos (White (a,b)) = (a,b)
 {-
   makeMove (p (a,b)) board
   changes the color in the given board from Empty to the color of the given point in the point with same values a and b as the given point.
-  PRE: True
-  RETURNS: the same board, but with the empty point (with same values a and b as the given point) replaced with the given point. If the original point is not empty then the given board will be returned untouched.
+  RETURNS: the same board, but with the empty point (with same values a and b as the given point) replaced with the given point. If the original point is not empty then the given board will be returned unchanged.
   VARIANT: length board
-  EXAMPLES: makeMove (White (1,1)) (makeBoard 2)   will return   [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]
-            makeMove (Black (1,1)) [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]    will return   [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]
+  EXAMPLES: makeMove (White (1,1)) (makeBoard 2)
+            will return
+            [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]
+
+            makeMove (Black (1,1)) [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]
+            will return
+            [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]
 -}
 
 makeMove :: Point -> Board -> Board
@@ -147,8 +160,13 @@ makeMove (Empty (a,b)) board                         = board
   checks if d1 and d2 are connected. TODO describe what points are connected
   PRE: d1 and d2 must be pairs that contain positive integers.
   RETURNS: True if the two given dots are connected, otherwise False.
-  EXAMPLES: connectedDots (1,1) (1,2)   will return   True
-            connectedDots (1,1) (2,2)   will return   False
+  EXAMPLES: connectedDots (1,1) (1,2)
+            will return
+            True
+
+            connectedDots (1,1) (2,2)
+            will return
+            False
 -}
 
 connectedDots :: (Int,Int) -> (Int,Int) -> Bool
@@ -160,10 +178,14 @@ connectedDots (a1,b1) (a2,b2) | (a1 - a2) == 1 && (b1-b2) ==1 = False
 {-
   connectedPoints p1 p2
   checks if two points are connected (have connected Dots as well as the same color). TODO describe what points are connected
-  PRE: True
   RETURNS: True if the two given points are connected, otherwise False.
-  EXAMPLES: connectedPoints (White (1,1)) (White (1,2))   will return   True
-            connectedPoints (White (1,1)) (Black (1,2))   will return   False
+  EXAMPLES: connectedPoints (White (1,1)) (White (1,2))
+            will return
+            True
+
+            connectedPoints (White (1,1)) (Black (1,2))
+            will return
+            False
 -}
 connectedPoints :: Point -> Point -> Bool
 connectedPoints p1 p2 | (sameColor p1 p2) && connectedDots (pointPos p1) (pointPos p2) = True
@@ -172,11 +194,11 @@ connectedPoints p1 p2 | (sameColor p1 p2) && connectedDots (pointPos p1) (pointP
 {-
   neighbours point board
   finds all the neighbours (connected points) to the given point in the given board.
-  PRE: True
   RETURNS: a list with all the points that are neighbours (connected) to the given point.
   VARIANT: length board
-  EXAMPLES: neighbours (White (1,1)) [Empty (0,0),Empty (0,1),White (1,0),Empty (1,1)] == [White (1,0)]
-            neighbours (Empty (1,1)) [Empty (0,0),Empty (0,1),Black (0,2),Empty (1,0),Empty (1,1),Black (1,2),Empty (2,0),Empty (2,1),Empty (2,2)] == [Empty (0,1),Empty (0,2),Empty (1,0),Empty (1,1),Empty (1,2),Empty (2,0),Empty (2,1)]
+  EXAMPLES: neighbours (White (1,1)) [Empty (0,0),Empty (0,1),White (1,0),Empty (1,1)]
+            will return
+            [White (1,0)]
 -}
 
 neighbours :: Point -> Board -> Board
@@ -188,7 +210,9 @@ neighbours p (x:xs) | (connectedPoints p x) == True = x : neighbours p xs
   pointRemover board n
   removes a point inside a board
   RETURNS: a board with point n removed
-  EXAMPLES: pointRemover
+  EXAMPLES: pointRemover [Empty (0,0),Empty (0,1),White (1,0),Empty (1,1)] (White (1,0))
+            will return
+            [Empty (0,0),Empty (0,1),Empty (1,1)]
 -}
 pointRemover :: Board -> Point -> Board
 pointRemover [] _ = []
@@ -199,7 +223,9 @@ pointRemover (b:bs) n | n == b = bs
   pointRemover2 board (n:ns)
   removes all given points inside a board
   RETURNS: a board with all points (n:ns) removed
-  EXAMPLES: pointRemover2
+  EXAMPLES: pointRemover2 [Empty (0,0),Empty (0,1),White (1,0),White (1,1)] [White (1,1),White (1,0)]
+            will return
+            [Empty (0,0),Empty (0,1)]
 -}
 pointRemover2 :: Board -> Board -> Board
 pointRemover2 [] _ = []
@@ -212,7 +238,9 @@ pointRemover2 (b:bs) (n:ns) | n == b = pointRemover2 bs ns
   crawler board p
   goes through a board and looks for all connected points in the board.
   RETURNS: all the connected points in a board.
-  EXAMPLES: crawler
+  EXAMPLES: crawler [Empty (0,0),Empty (0,1),Empty (0,2),White (1,0),White (1,1),White (1,2),Empty (2,0),Empty (2,1),Empty (2,2)] (White (1,0))
+            will return
+            [White (1,0),White (1,1),White (1,2)]
 -}
 crawler :: Board -> Point -> Board
 crawler [] _ = []
@@ -224,7 +252,11 @@ crawler board p = crawlerAux board [p] []
   crawlerAux board (p:ps) cP
   goes through a board and looks for all connected points in the board.
   RETURNS: all the connected points in a board.
-  EXAMPLES: crawlerAux
+  VARIANT: length of ps.
+  EXAMPLES: crawlerAux [White (0,0),Empty (0,1),White (1,0),White (1,1)] [(White (1,0))] []
+            will return
+            [White (0,0),White (1,0),White (1,1)]
+
 -}
 crawlerAux :: Board -> Board -> Board -> Board
 crawlerAux board [] [] = []
@@ -244,7 +276,9 @@ crawlerAux board (p:ps) cP = crawler b x ++ crawlerAux b ps [] ++ crawlerAux b x
   blackSide board
   creates a list of all points on the top edge of the board.
   RETURNS: all points on the board that represent the top edge.
-  EXAMPLES: blackSide
+  EXAMPLES: blackSide (makeBoard 2)
+            will return
+            [Empty (0,0),Empty (0,1)]
 -}
 blackSide :: Board -> Board
 blackSide [] = []
@@ -257,8 +291,10 @@ blackSide (p:ps) = []
 {-
   whiteSide board
   creates a list of all points on the left edge of the board.
-  RETURNS: all points on the board that represent the left edge of the board.
-  EXAMPLES: whiteSide
+  RETURNS: all points on the board that represent the left edge of the board. 
+  EXAMPLES: whiteSide (makeBoard 2)
+            will return
+            [Empty (0,0),Empty (1,0)]
 -}
 whiteSide :: Board -> Board
 whiteSide [] = []
@@ -268,10 +304,13 @@ whiteSide ((White (a,b)):ps) | b == 0 = (White (a,b)):(whiteSide ps)
 whiteSide (p:ps) =  whiteSide ps
 
 {-
-  blackEndSide board
+  blackEndSide board extraBoard
   creates a list of all points on the buttom edge of the board.
   RETURNS: all points on the board that represent the buttom side of the board.
-  EXAMPLES: blackEndSide
+  EXAMPLES: blackEndSide (makeBoard 2) (makeBoard 2)
+            will return
+            [Empty (1,0),Empty (1,1)]
+
 -}
 blackEndSide :: Board -> Board -> Board
 blackEndSide [] _ = []
@@ -288,10 +327,12 @@ blackEndSide (p:ps) board = blackEndSide ps board
 
 
 {-
-  whiteEndSide board
+  whiteEndSide board extraBoard
   creates a list of all points on the right edge of the board.
   RETURNS: all points on the board that represent the left side of the board.
-  EXAMPLES: whiteEndSide
+  EXAMPLES: whiteEndSide (makeBoard 2) (makeBoard 2)
+            will return
+            [Empty (0,1),Empty (1,1)]
 -}
 whiteEndSide :: Board -> Board -> Board
 whiteEndSide [] _ = []
@@ -310,7 +351,11 @@ whiteEndSide (p:ps) board = whiteEndSide ps board
   startCon board (x:xs)
   checks if the input list of points (x:xs) has a non empty point on the board
   RETURNS: True if the input list (x:xs) has a non empty point.
-  EXAMPLES: startCon
+  VARIANT: length of ss.
+  EXAMPLES: startCon [Empty (0,0),Empty (0,1),Black (1,0),Black (1,1)] [Black (1,0)]
+            will return
+            True
+ 
 -}
 startCon :: Board -> Board -> Bool
 startCon board [] = False
@@ -321,7 +366,9 @@ startCon board (s:ss) | (crawler board s) == [] = startCon board ss
   endCon board (x:xs) (y:ys) endPoints
   checks if the list of points (x:xs) has a point that exist in list (y:ys)
   RETURNS: True if a point in (x:xs) is found in (y:ys).
-  EXAMPLES: startCon
+  EXAMPLES: endCon [Empty (0,0), Empty (0,1), Empty (1,0), Black (1,1)] [Empty (1,0), Black (1,1)] [] [Empty (1,0), Black (1,1)]
+            will return
+            False
 -}
 endCon :: Board -> Board -> Board -> Board -> Bool
 endCon board _ [] _ = False
@@ -333,7 +380,10 @@ endCon board (e:es) (x:xs) endPoints | (sameColor e x) && (pointPos e == pointPo
   listOfConPoints board (x:xs)
   shows all connected points from the first row of the board.
   RETURNS: a list of list element who consist of connected points from the first row of the board.
-  EXAMPLES: listOfConPoints
+  EXAMPLES: listOfConPoints [Empty (0,0), Black (0,1), Empty (1,0), Black (1,1)] [Black (0,1)]
+            will return
+            [[Black (0,1),Black (1,1)]]
+
 -}
 listOfConPoints :: Board -> Board -> [Board]
 listOfConPoints _ [] = []
@@ -345,7 +395,7 @@ listOfConPoints board (s:ss) | (crawler board s) == [] = listOfConPoints board s
   winCon board color
   checks if the player of given color has won the game.
   RETURNS: true if the player has won, otherwise it returns false.
-  EXAMPLES: winCon
+  EXAMPLES: winCon 
 -}
 winCon :: Board -> Point -> Bool
 winCon board color | sameColor color (Black (0,0)) = winCondition board (blackSide board) (blackEndSide board board)
