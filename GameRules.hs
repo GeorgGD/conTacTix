@@ -50,7 +50,6 @@ makePoint a b = Empty (a,b)
   EXAMPLES: makeBoard 3
             will return
             [Empty (0,0),Empty (0,1),Empty (0,2),Empty (1,0),Empty (1,1),Empty (1,2),Empty (2,0),Empty (2,1),Empty (2,2)]
-
             makeBoard 2
             will return
             [Empty (0,0),Empty (0,1),Empty (1,0),Empty (1,1)]
@@ -85,7 +84,6 @@ makeBoard' x a b | a == x =  []
   EXAMPLES:  rowBoard 5 1 2
              will return
              [Empty (1,2),Empty (1,3),Empty (1,4)]
-
              rowBoard 4 1 1
              will return
              [Empty (1,1),Empty (1,2),Empty (1,3)]
@@ -102,7 +100,6 @@ rowBoard x a b | mod b x == (x-1) = [makePoint a b]
   EXAMPLES:  emptyPoint (Empty (2,5))
              will return
              True
-
             emptyPoint (White (3,1))
             will return
             False
@@ -119,7 +116,6 @@ emptyPoint _ = False
   EXAMPLES: pointPos (White (1,4))
             will return
             (1,4)
-
             pointPos (Empty (0,4))
             will return
             (0,4)
@@ -140,7 +136,6 @@ pointPos (White (a,b)) = (a,b)
   EXAMPLES: makeMove (White (1,1)) (makeBoard 2)
             will return
             [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]
-
             makeMove (Black (1,1)) [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]
             will return
             [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]
@@ -163,7 +158,6 @@ makeMove (Empty (a,b)) board                         = board
   EXAMPLES: connectedDots (1,1) (1,2)
             will return
             True
-
             connectedDots (1,1) (2,2)
             will return
             False
@@ -182,7 +176,6 @@ connectedDots (a1,b1) (a2,b2) | (a1 - a2) == 1 && (b1-b2) ==1 = False
   EXAMPLES: connectedPoints (White (1,1)) (White (1,2))
             will return
             True
-
             connectedPoints (White (1,1)) (Black (1,2))
             will return
             False
@@ -256,7 +249,6 @@ crawler board p = crawlerAux board [p] []
   EXAMPLES: crawlerAux [White (0,0),Empty (0,1),White (1,0),White (1,1)] [(White (1,0))] []
             will return
             [White (0,0),White (1,0),White (1,1)]
-
 -}
 crawlerAux :: Board -> Board -> Board -> Board
 crawlerAux board [] [] = []
@@ -310,7 +302,6 @@ whiteSide (p:ps) =  whiteSide ps
   EXAMPLES: blackEndSide (makeBoard 2) (makeBoard 2)
             will return
             [Empty (1,0),Empty (1,1)]
-
 -}
 blackEndSide :: Board -> Board -> Board
 blackEndSide [] _ = []
@@ -383,7 +374,6 @@ endCon board (e:es) (x:xs) endPoints | (sameColor e x) && (pointPos e == pointPo
   EXAMPLES: listOfConPoints [Empty (0,0), Black (0,1), Empty (1,0), Black (1,1)] [Black (0,1)]
             will return
             [[Black (0,1),Black (1,1)]]
-
 -}
 listOfConPoints :: Board -> Board -> [Board]
 listOfConPoints _ [] = []
@@ -547,8 +537,8 @@ playWhiteAI board = do
 playAI :: Board -> IO ()
 playAI board = do
     g <- newStdGen
-    let (a,gen1) = randomR (0,3) g :: (Int, StdGen)
-    let (b,gen2) = randomR (0,3) gen1 :: (Int, StdGen)
+    let (a,gen1) = randomR (0,11) g :: (Int, StdGen)
+    let (b,gen2) = randomR (0,11) gen1 :: (Int, StdGen)
     newBoard <- return (makeMove (toPointB (a,b)) board)
     if winCon newBoard (Black (0,0))
       then do putStrLn "AI has won!"
@@ -564,25 +554,34 @@ playAI board = do
   PRE: True
   RETURNS: Board of size 12
   SIDE-EFFECTS: Creates a board in IO monad
-  EXAMPLES: genGame == board of 12x12 empty points
+  EXAMPLES: genGame
+            will return
+            board of 12x12 empty points
 -}
 
 genGame :: IO Board
-genGame = return (makeBoard 4)
+genGame = return (makeBoard 12)
 
 {-
  printGame board
  prints the provided board (in IO monad?)
   PRE: True
- RETURNS:
+ RETURNS: the line "The state of the board is currently" and then the current board.
  SIDE EFFECTS: Prints state of board to command line
- EXAMPLES:
 -}
 
 
 printGame :: Board -> IO ()
 printGame board = do
-  putStrLn $ "The state of the board is currently " ++ (show board)
+  putStrLn $ "The state of the board is currently" ++ (show board)
+
+{-
+ printAI board
+ prints the current state of board after the AI has made a move.
+  PRE: True
+ RETURNS: the line "AI made a move. The state of the board is now" and then the current board.
+ SIDE EFFECTS: Prints state of board to command line
+-}
 
 printAI :: Board -> IO ()
 printAI board = do
@@ -592,7 +591,13 @@ printAI board = do
   getPoint
   reads IO input and warns if input is not valid Point
   RETURNS: Input of user. Asks again if provided point is not valid.
-  EXAMPLES: Input other than point raises exception, if correct input returns input
+  EXAMPLES: White (2,3)  
+            will return 
+            Incorrect input! Points have form (x,y). Try again.
+
+            (2,3)
+            will return 
+            (2,3)
   PRE: True
 -}
 -- add input for click function
@@ -611,8 +616,13 @@ getPoint = do
   checks if two boards are equal
   PRE: True
   RETURNS: True if b1 == b2
-  EXAMPLES: eqBoard [] [] == True
-            eqBoard [(White, (1,1))] [(Black (1,1))] == False
+  EXAMPLES: eqBoard [] [] 
+            will return
+            True
+
+            eqBoard [(White, (1,1))] [(Black (1,1))]
+            will return
+            False
 -}
 
 eqBoard :: Board -> Board -> Bool
@@ -623,7 +633,9 @@ eqBoard b1 b2 | b1 == b2 = True
  toPointW (a,b)
  turns pair into white point with coordinates (a,b)
  RETURNS: White point
- EXAMPLES: toPointW (1,1) == (White (1,1))
+ EXAMPLES: toPointW (1,1)
+           will return
+           (White (1,1))
 -}
 toPointW :: (Int,Int) -> Point
 toPointW (a,b) = White (a,b)
@@ -632,7 +644,9 @@ toPointW (a,b) = White (a,b)
  toPointB (a,b)
  turns pair into white point with coordinates (a,b)
  RETURNS: Black point
- EXAMPLES: toPointB (1,1) == (Black (1,1))
+ EXAMPLES: toPointB (1,1)
+           will return
+           (Black (1,1))
 -}
 toPointB :: (Int,Int) -> Point
 toPointB (a,b) = Black (a,b)
@@ -645,6 +659,5 @@ listOfTests = [TestLabel "test1" test1, TestLabel "test2" test2, TestLabel "test
 
 -- to run tests do runTestTT tests
 tests = TestList listOfTests
-
 
 
