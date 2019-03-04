@@ -6,7 +6,9 @@ import Test.HUnit
 import System.Random
 
 {-
-  A point is represented by a color and a pair of coordinates.
+  A point represents the location of a playable piece in a game board of size 12x12.
+  If the point is Empty than it means that a player of either color white of black.
+  INVARIANT: True
 -}
 
 data Point = Empty (Int,Int) | White (Int,Int) | Black (Int,Int) deriving (Show,Eq,Read)
@@ -50,6 +52,7 @@ makePoint a b = Empty (a,b)
   EXAMPLES: makeBoard 3
             will return
             [Empty (0,0),Empty (0,1),Empty (0,2),Empty (1,0),Empty (1,1),Empty (1,2),Empty (2,0),Empty (2,1),Empty (2,2)]
+
             makeBoard 2
             will return
             [Empty (0,0),Empty (0,1),Empty (1,0),Empty (1,1)]
@@ -84,6 +87,7 @@ makeBoard' x a b | a == x =  []
   EXAMPLES:  rowBoard 5 1 2
              will return
              [Empty (1,2),Empty (1,3),Empty (1,4)]
+
              rowBoard 4 1 1
              will return
              [Empty (1,1),Empty (1,2),Empty (1,3)]
@@ -100,6 +104,7 @@ rowBoard x a b | mod b x == (x-1) = [makePoint a b]
   EXAMPLES:  emptyPoint (Empty (2,5))
              will return
              True
+
             emptyPoint (White (3,1))
             will return
             False
@@ -116,6 +121,7 @@ emptyPoint _ = False
   EXAMPLES: pointPos (White (1,4))
             will return
             (1,4)
+
             pointPos (Empty (0,4))
             will return
             (0,4)
@@ -136,6 +142,7 @@ pointPos (White (a,b)) = (a,b)
   EXAMPLES: makeMove (White (1,1)) (makeBoard 2)
             will return
             [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]
+
             makeMove (Black (1,1)) [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]
             will return
             [Empty (0,0),Empty (0,1),Empty (1,0),White (1,1)]
@@ -158,6 +165,7 @@ makeMove (Empty (a,b)) board                         = board
   EXAMPLES: connectedDots (1,1) (1,2)
             will return
             True
+
             connectedDots (1,1) (2,2)
             will return
             False
@@ -176,6 +184,7 @@ connectedDots (a1,b1) (a2,b2) | (a1 - a2) == 1 && (b1-b2) ==1 = False
   EXAMPLES: connectedPoints (White (1,1)) (White (1,2))
             will return
             True
+
             connectedPoints (White (1,1)) (Black (1,2))
             will return
             False
@@ -249,6 +258,7 @@ crawler board p = crawlerAux board [p] []
   EXAMPLES: crawlerAux [White (0,0),Empty (0,1),White (1,0),White (1,1)] [(White (1,0))] []
             will return
             [White (0,0),White (1,0),White (1,1)]
+
 -}
 crawlerAux :: Board -> Board -> Board -> Board
 crawlerAux board [] [] = []
@@ -302,6 +312,7 @@ whiteSide (p:ps) =  whiteSide ps
   EXAMPLES: blackEndSide (makeBoard 2) (makeBoard 2)
             will return
             [Empty (1,0),Empty (1,1)]
+
 -}
 blackEndSide :: Board -> Board -> Board
 blackEndSide [] _ = []
@@ -371,9 +382,11 @@ endCon board (e:es) (x:xs) endPoints | (sameColor e x) && (pointPos e == pointPo
   listOfConPoints board (x:xs)
   shows all connected points from the first row of the board.
   RETURNS: a list of list element who consist of connected points from the first row of the board.
+  VARIANT: length of ss.
   EXAMPLES: listOfConPoints [Empty (0,0), Black (0,1), Empty (1,0), Black (1,1)] [Black (0,1)]
             will return
             [[Black (0,1),Black (1,1)]]
+
 -}
 listOfConPoints :: Board -> Board -> [Board]
 listOfConPoints _ [] = []
@@ -385,7 +398,10 @@ listOfConPoints board (s:ss) | (crawler board s) == [] = listOfConPoints board s
   winCon board color
   checks if the player of given color has won the game.
   RETURNS: true if the player has won, otherwise it returns false.
-  EXAMPLES: winCon 
+  EXAMPLES: winCon [Empty (0,0), Black (0,1), Empty (1,0), Black (1,1)] (Black (0,0))
+            will return
+            True
+
 -}
 winCon :: Board -> Point -> Bool
 winCon board color | sameColor color (Black (0,0)) = winCondition board (blackSide board) (blackEndSide board board)
@@ -396,7 +412,9 @@ winCon board color | sameColor color (Black (0,0)) = winCondition board (blackSi
   winCondition board start end
   check if a point in start list is connected to a point in the end list.
   RETURNS: true if there is a connection between start and end, otherwise false.
-  EXAMPLES: winCondition
+  EXAMPLES: winCondition [Empty (0,0), Empty (0,1), Black (1,0), Empty (1,1)] [Empty (0,0),Empty (0,1)] [Empty (0,0),Black (1,0)]
+            will return
+            False
 -}
 winCondition :: Board -> Board -> Board -> Bool
 winCondition board start end | (startCon board start) = endConFeeder (c:cs)
@@ -411,8 +429,7 @@ winCondition board start end | (startCon board start) = endConFeeder (c:cs)
 
 {-
   mainAI
-  play the game of Con-Tac-Tix versus a stupid AI!
-  PRE: True
+  play the game of Con-Tac-Tix versus an AI!
   RETURNS: Runs the game loop until a winner is crowned
   -}
 
@@ -424,13 +441,10 @@ mainAI = do
   playWhiteAI board
 
 {-
-  main
+  main'
   Play the game of Con-Tac-Tix!
-  PRE: True
-  RETURNS: Game loop ?
-  SIDE-EFFECTS: Play the game, never returns (?)
-  EXAMPLES: ???
-  ctrl + z to exit early
+  RETURNS: Game loop 
+  SIDE-EFFECTS: Starts the game in the terminal.
 -}
 
 main' :: IO ()
@@ -439,13 +453,13 @@ main' = do
    board <- genGame
    printGame board
    playWhite board
+
 {-
  playWhite board
  places white point at board
- PRE: Board is a valid, non-empty list of Points
+ PRE: Board is a valid, non-empty list of Points.
  RETURNS: Output to command line (Board with White point inserted)
- SIDE-EFFECTS: Game interaction. Returns if White wins
- EXAMPLES: ??
+ SIDE-EFFECTS: Game interaction. Returns if White wins.
 -}
 
 playWhite :: Board -> IO ()
@@ -472,9 +486,7 @@ playWhite board = do
   playBlack board
   places black points on board
   PRE: Board is a valid, non-empty list of Points
-  RETURNS: Nothing ? (Board with Black point inserted)
   SIDE-EFFECTS: Game interaction. Returns if Black wins
-  EXAMPLES: ??
 -}
 
 playBlack :: Board -> IO ()
@@ -495,21 +507,13 @@ playBlack board = do
                    else return ()
         else do playWhite newBoard
 
-
-{-
-  playAI
-  randomly places points on th
-  -}
-
 {-
  playWhiteAI board
  places white point at board vs an AI
  PRE: Board is a valid, non-empty list of Points
  RETURNS: Output to command line (Board with White point inserted)
  SIDE-EFFECTS: Game interaction. Returns if White wins
- EXAMPLES: ??
 -}
-
 playWhiteAI :: Board -> IO ()
 playWhiteAI board = do
   putStrLn "White players move"
@@ -530,10 +534,12 @@ playWhiteAI board = do
                   playAI newBoard
 
 {-
-  playAI
-  randomly places points on th
-  -}
-
+ playAI board
+ places white point at board vs an AI
+ PRE: Board is a valid, non-empty list of Points
+ RETURNS: Output to command line (Board with White point inserted)
+ SIDE-EFFECTS: Game interaction. Returns if White wins
+-}
 playAI :: Board -> IO ()
 playAI board = do
     g <- newStdGen
@@ -547,16 +553,15 @@ playAI board = do
           then do playAI board
             else do printAI newBoard
                     playWhiteAI newBoard
---z = makeBoard 12
+
 {-
   genGame
   Generates a board of size 12x12 filled with empty points.
-  PRE: True
   RETURNS: Board of size 12
   SIDE-EFFECTS: Creates a board in IO monad
   EXAMPLES: genGame
             will return
-            board of 12x12 empty points
+            board of size 12x12 with only empty points
 -}
 
 genGame :: IO Board
@@ -565,7 +570,6 @@ genGame = return (makeBoard 12)
 {-
  printGame board
  prints the provided board (in IO monad?)
-  PRE: True
  RETURNS: the line "The state of the board is currently" and then the current board.
  SIDE EFFECTS: Prints state of board to command line
 -}
@@ -573,16 +577,14 @@ genGame = return (makeBoard 12)
 
 printGame :: Board -> IO ()
 printGame board = do
-  putStrLn $ "The state of the board is currently" ++ (show board)
+  putStrLn $ "The state of the board is currently " ++ (show board)
 
 {-
  printAI board
  prints the current state of board after the AI has made a move.
-  PRE: True
  RETURNS: the line "AI made a move. The state of the board is now" and then the current board.
  SIDE EFFECTS: Prints state of board to command line
 -}
-
 printAI :: Board -> IO ()
 printAI board = do
   putStrLn $ "AI made a move. The state of the board is now " ++ (show board)
@@ -598,9 +600,8 @@ printAI board = do
             (2,3)
             will return 
             (2,3)
-  PRE: True
 -}
--- add input for click function
+
 
 getPoint :: IO (Int,Int)
 getPoint = do
@@ -659,5 +660,6 @@ listOfTests = [TestLabel "test1" test1, TestLabel "test2" test2, TestLabel "test
 
 -- to run tests do runTestTT tests
 tests = TestList listOfTests
+
 
 
